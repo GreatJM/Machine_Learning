@@ -1,0 +1,99 @@
+# -*- coding: UTF-8 -*-
+
+import numpy as np
+from math import sqrt
+from collections import Counter
+from os import listdir
+import operator
+
+"""
+  k:knn算法的参数,距离测试点距离最近的k个点
+  X_train:训练集
+  y_trian:标签
+  x:测试集
+"""
+def KNN_Classifier(k, X_train, y_train, x):
+    train_size = X_train.shape[0]
+    #X_train的行数
+    mat = np.tile(x,(train_size,1)) - X_train
+    #将测试集和训练集的每一行对应相减
+    distances_1 = mat**2
+    #所得的差每一个都平方
+    distances_2 = distances_1.sum(axis=1)
+    #将所得的乘方相加
+    distances = (distances_2)**0.5
+    #求出x到X_train所有点的距离
+    nearest = np.argsort(distances)
+    #对于所有距离的序号进行排序
+    topk_y = [y_train[i] for i in nearest[:k]]
+    #求出距离最近的几个点的标签
+    votes = Counter(topk_y)
+    #统计标签的数量
+    return votes.most_common(1)[0][0]
+    #求出最多的那个标签
+
+def imag2vector(filename):
+    returnVect = np.zeros((1,1024))
+    #创建一个1*1024的零向量
+    fr = open(filename)
+    for i in range(32):
+        lineStr = fr.readline()
+    #每次读取文件的一行
+        for j in range(32):
+            returnVect[0,32*i+j] = int(lineStr[j])
+    #每一行的前32个元素依次添加到returnVect中
+    return returnVect
+
+def handwritingClassTest():
+    hwLables = []
+    #训练集的标签
+    trainingFileList = listdir('trainingDigits')
+    #返回trainingDigits目录下的文件名
+    m = len(trainingFileList)
+    #trainingDigits文件的个数
+    trainingMat = np.zeros((m,1024))
+    #初始化训练集的矩阵
+    for i in range(m):
+        fileNameStr = trainingFileList[i]
+        #得到文件名字
+        classNumStr = int(fileNameStr.split('_')[0])
+        #得到分类的数字
+        hwLables.append(classNumStr)
+        #得到训练集的标签
+        trainingMat[i,:] = imag2vector('trainingDigits/%s' % (fileNameStr))
+
+    testFileList = listdir('testDigits')
+    #testDigits目录下文件名字
+    errorCount = 0.0
+    #错误检测的个数
+    goodCount = 0.0
+    mTest = len(testFileList)
+        #测试集的个数
+    for i in range(mTest):
+        fileNameStr = testFileList[i]
+        #得到文件的名字
+        classNumber = int(fileNameStr.split('_')[0])
+        #得到分类的数字
+        vectorUnderTest = imag2vector('testDigits/%s' % fileNameStr)
+        classifierResults = KNN_Classifier(3, trainingMat, hwLables, vectorUnderTest)
+        print("预测结果为%d\t真实结果为%d" % (classifierResults, classNumber))
+        if(classifierResults == classNumber):
+            goodCount +=1.0
+        if (classifierResults == classNumber):
+            errorCount += 1.0
+        print("总共错了%d个数据\n正确率为%f\n" % (errorCount, goodCount / (i+1.0)))
+
+
+if __name__ == '__main__':
+	handwritingClassTest()
+
+
+
+
+
+
+
+
+
+
+
